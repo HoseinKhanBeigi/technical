@@ -150,83 +150,179 @@ export default function Dashboard() {
 
   return (
     <div className="container">
+      {/* Header */}
+      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+        <h1 style={{ color: 'white', fontSize: '2.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+          Billing Dashboard
+        </h1>
+        <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '1.1rem' }}>
+          Welcome back, {userData.username}!
+        </p>
+      </div>
+
+      {/* Status Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+        <div className="stat-card">
+          <h3>Current Plan</h3>
+          <div className="stat-value">
+            {userData.current_plan === 'basic' ? 'Basic' : 
+             userData.current_plan === 'pro' ? 'Pro' : 
+             'None'}
+          </div>
+          <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', opacity: 0.9 }}>
+            Status: <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>
+              {userData.subscription_status}
+            </span>
+          </div>
+        </div>
+
+        <div className="stat-card" style={{ background: 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)' }}>
+          <h3>Lifetime Value</h3>
+          <div className="stat-value">
+            {formatCurrency(userData.total_amount_paid)}
+          </div>
+          <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', opacity: 0.9 }}>
+            Total amount paid
+          </div>
+        </div>
+      </div>
+
+      {/* Main Card */}
       <div className="card">
-        <h1>Dashboard</h1>
-        
         {error && <div className="error">{error}</div>}
         {success && <div className="success">{success}</div>}
 
-        <div style={{ marginTop: '2rem' }}>
-          <h2>
-            Current Plan:
-            <span className={`plan-badge plan-${userData.current_plan}`}>
-              {userData.current_plan === 'basic' ? 'Basic Plan' : 
-               userData.current_plan === 'pro' ? 'Pro Plan' : 
-               'No Plan'}
-            </span>
-            <span className={`status-badge status-${userData.subscription_status}`}>
-              {userData.subscription_status}
-            </span>
+        {/* Subscription Management */}
+        <div style={{ marginBottom: '2rem' }}>
+          <h2 style={{ fontSize: '1.75rem', marginBottom: '1.5rem', color: '#333' }}>
+            Manage Subscription
           </h2>
 
-          <h2 style={{ marginTop: '1.5rem' }}>
-            Lifetime Spend: <span style={{ color: '#2ecc71', fontSize: '1.5rem' }}>
-              {formatCurrency(userData.total_amount_paid)}
-            </span>
-          </h2>
-
-          <div style={{ marginTop: '2rem' }}>
-            <h3>Manage Subscription</h3>
-            <div style={{ marginTop: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+            {/* Basic Plan Card */}
+            <div className={`plan-card ${userData.current_plan === 'basic' ? 'active' : ''}`}>
+              <h3>Basic Plan</h3>
+              <div className="price">$10<span style={{ fontSize: '1rem', color: '#999' }}>/month</span></div>
+              <ul className="features">
+                <li>Core features</li>
+                <li>Standard support</li>
+                <li>Basic analytics</li>
+              </ul>
               <button
-                className="btn btn-primary"
+                className={`btn ${userData.current_plan === 'basic' ? 'btn-secondary' : 'btn-primary'}`}
                 onClick={() => updateSubscription('basic')}
                 disabled={updating || userData.current_plan === 'basic'}
+                style={{ width: '100%', marginTop: '1rem' }}
               >
-                {updating ? 'Updating...' : 'Upgrade to Basic ($10)'}
+                {updating ? 'Updating...' : userData.current_plan === 'basic' ? 'Current Plan' : 'Upgrade to Basic'}
               </button>
+            </div>
+
+            {/* Pro Plan Card */}
+            <div className={`plan-card ${userData.current_plan === 'pro' ? 'active' : ''}`}>
+              <h3>Pro Plan</h3>
+              <div className="price">$20<span style={{ fontSize: '1rem', color: '#999' }}>/month</span></div>
+              <ul className="features">
+                <li>All Basic features</li>
+                <li>Premium support</li>
+                <li>Advanced analytics</li>
+                <li>Priority access</li>
+              </ul>
               <button
-                className="btn btn-secondary"
+                className={`btn ${userData.current_plan === 'pro' ? 'btn-secondary' : 'btn-secondary'}`}
                 onClick={() => updateSubscription('pro')}
                 disabled={updating || userData.current_plan === 'pro'}
+                style={{ width: '100%', marginTop: '1rem' }}
               >
-                {updating ? 'Updating...' : 'Upgrade to Pro ($20)'}
+                {updating ? 'Updating...' : userData.current_plan === 'pro' ? 'Current Plan' : 'Upgrade to Pro'}
               </button>
-              {userData.current_plan !== 'none' && (
-                <button
-                  className="btn btn-danger"
-                  onClick={() => updateSubscription('none')}
-                  disabled={updating}
-                >
-                  {updating ? 'Cancelling...' : 'Cancel Subscription'}
-                </button>
-              )}
             </div>
           </div>
 
-          {userData.subscription_status === 'active' && (
-            <div style={{ marginTop: '2rem' }}>
-              <a href="/premium" style={{ color: '#667eea', textDecoration: 'underline' }}>
-                → Access Premium Content
-              </a>
+          {/* Cancel Button */}
+          {userData.current_plan !== 'none' && (
+            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+              <button
+                className="btn btn-danger"
+                onClick={() => updateSubscription('none')}
+                disabled={updating}
+                style={{ minWidth: '200px' }}
+              >
+                {updating ? 'Cancelling...' : 'Cancel Subscription'}
+              </button>
             </div>
           )}
+        </div>
 
-          <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid #eee' }}>
-            <button
-              className="btn btn-danger"
-              onClick={async () => {
-                try {
-                  await axios.post(`${API_URL}/api/logout/`, {}, { withCredentials: true })
-                  router.push('/login')
-                } catch (err) {
-                  console.error('Logout error:', err)
-                }
+        {/* Premium Access */}
+        {userData.subscription_status === 'active' && (
+          <div style={{ 
+            marginTop: '2rem', 
+            padding: '1.5rem', 
+            background: 'linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%)',
+            borderRadius: '12px',
+            border: '2px solid #667eea',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ marginBottom: '1rem', color: '#667eea' }}>🎉 Premium Access Active</h3>
+            <p style={{ marginBottom: '1.5rem', color: '#666' }}>
+              You have access to premium content and features!
+            </p>
+            <a 
+              href="/premium" 
+              style={{ 
+                display: 'inline-block',
+                padding: '0.75rem 2rem',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                borderRadius: '8px',
+                fontWeight: 600,
+                textDecoration: 'none',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)'
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.4)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.3)'
               }}
             >
-              Logout
-            </button>
+              → Access Premium Content
+            </a>
           </div>
+        )}
+
+        {/* User Info & Logout */}
+        <div style={{ 
+          marginTop: '3rem', 
+          paddingTop: '2rem', 
+          borderTop: '2px solid #f0f0f0',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem'
+        }}>
+          <div>
+            <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.25rem' }}>Logged in as</p>
+            <p style={{ fontWeight: 600, color: '#333' }}>{userData.email}</p>
+          </div>
+          <button
+            className="btn btn-danger"
+            onClick={async () => {
+              try {
+                await axios.post(`${API_URL}/api/logout/`, {}, { withCredentials: true })
+                router.push('/login')
+              } catch (err) {
+                console.error('Logout error:', err)
+              }
+            }}
+          >
+            Logout
+          </button>
         </div>
       </div>
     </div>
