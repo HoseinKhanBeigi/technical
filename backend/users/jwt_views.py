@@ -2,16 +2,15 @@
 JWT authentication views.
 
 Provides JWT token-based authentication endpoints for API access.
+Business logic is delegated to AuthService.
 """
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
 from django.views.decorators.csrf import csrf_exempt
-from .serializers import UserSerializer
+from .auth_service import AuthService
+from .user_service import UserService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -48,27 +47,16 @@ def jwt_login(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    user = authenticate(request, username=username, password=password)
+    # Use AuthService for login logic
+    response_data, error_message = AuthService.login_user(request, username, password)
     
-    if user is None:
-        logger.warning(f"Failed login attempt for username: {username}")
+    if error_message:
         return Response(
-            {'detail': 'Invalid credentials'},
+            {'detail': error_message},
             status=status.HTTP_401_UNAUTHORIZED
         )
     
-    # Generate JWT tokens
-    refresh = RefreshToken.for_user(user)
-    access_token = refresh.access_token
-    
-    logger.info(f"User {user.username} logged in successfully with JWT")
-    
-    # Return tokens and user data
-    return Response({
-        'access': str(access_token),
-        'refresh': str(refresh),
-        'user': UserSerializer(user).data,
-    })
+    return Response(response_data)
 
 
 @csrf_exempt
@@ -85,20 +73,20 @@ def jwt_logout(request):
             "refresh": "refresh_token_string"
         }
     """
-    try:
-        refresh_token = request.data.get('refresh')
-        if refresh_token:
-            token = RefreshToken(refresh_token)
-            token.blacklist()  # Blacklist the token
-            logger.info(f"User {request.user.username} logged out (JWT token blacklisted)")
+    refresh_token = request.data.get('refresh')
+    
+    # Use AuthService for logout logic
+    success, error_message = AuthService.logout_user(refresh_token)
+    
+    if success:
+        logger.info(f"User {request.user.username} logged out (JWT token blacklisted)")
         return Response(
             {'detail': 'Successfully logged out'},
             status=status.HTTP_200_OK
         )
-    except Exception as e:
-        logger.error(f"Error during JWT logout: {e}")
+    else:
         return Response(
-            {'detail': 'Error logging out'},
+            {'detail': error_message or 'Error logging out'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -122,19 +110,18 @@ def jwt_refresh(request):
             "access": "new_jwt_access_token"
         }
     """
+    refresh_token = request.data.get('refresh')
+    if not refresh_token:
+        return Response(
+            {'detail': 'Refresh token is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
     try:
-        refresh_token = request.data.get('refresh')
-        if not refresh_token:
-            return Response(
-                {'detail': 'Refresh token is required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        token = RefreshToken(refresh_token)
-        access_token = token.access_token
-        
+        # Use AuthService for token refresh logic
+        access_token = AuthService.refresh_access_token(refresh_token)
         return Response({
-            'access': str(access_token),
+            'access': access_token,
         })
     except Exception as e:
         logger.error(f"Error refreshing JWT token: {e}")
@@ -159,8 +146,11 @@ def jwt_verify(request):
             "user": { ... user data ... }
         }
     """
+    # Use UserService for user serialization
+    user_data = UserService.get_user_status(request.user)
+    
     return Response({
         'valid': True,
-        'user': UserSerializer(request.user).data,
+        'user': user_data,
     })
 

@@ -2,10 +2,12 @@
 Webhook event handlers for Stripe events.
 
 All handlers use database transactions to ensure data consistency.
+Business logic for user retrieval is delegated to UserService.
 """
 from django.conf import settings
 from django.db import transaction
 from .models import User
+from .user_service import UserService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,7 +24,12 @@ def handle_subscription_created(subscription):
     subscription_id = subscription.get('id')
     
     try:
-        user = User.objects.select_for_update().get(stripe_customer_id=customer_id)
+        # Use UserService with select_for_update for transaction safety
+        user = UserService.get_user_by_stripe_customer_id(customer_id, select_for_update=True)
+        if not user:
+            logger.warning(f"User not found for customer_id: {customer_id}")
+            return
+        
         user.stripe_subscription_id = subscription_id
         user.subscription_status = 'active'
         
@@ -36,7 +43,7 @@ def handle_subscription_created(subscription):
         
         user.save()
         logger.info(f"Subscription {subscription_id} created for user {user.username}")
-    except User.DoesNotExist:
+    except Exception as e:
         logger.warning(f"User not found for customer_id: {customer_id}")
     except Exception as e:
         logger.error(f"Error handling subscription.created: {str(e)}", exc_info=True)
@@ -55,8 +62,12 @@ def handle_subscription_updated(subscription):
     status = subscription.get('status')
     
     try:
-        # Use select_for_update to lock the row during update
-        user = User.objects.select_for_update().get(stripe_customer_id=customer_id)
+        # Use UserService with select_for_update for transaction safety
+        user = UserService.get_user_by_stripe_customer_id(customer_id, select_for_update=True)
+        if not user:
+            logger.warning(f"User not found for customer_id: {customer_id}")
+            return
+        
         user.stripe_subscription_id = subscription_id
         
         if status in ['active', 'trialing']:
@@ -74,7 +85,7 @@ def handle_subscription_updated(subscription):
         
         user.save()
         logger.info(f"Subscription {subscription_id} updated for user {user.username}")
-    except User.DoesNotExist:
+    except Exception as e:
         logger.warning(f"User not found for customer_id: {customer_id}")
     except Exception as e:
         logger.error(f"Error handling subscription.updated: {str(e)}", exc_info=True)
@@ -91,13 +102,18 @@ def handle_subscription_deleted(subscription):
     customer_id = subscription.get('customer')
     
     try:
-        user = User.objects.select_for_update().get(stripe_customer_id=customer_id)
+        # Use UserService with select_for_update for transaction safety
+        user = UserService.get_user_by_stripe_customer_id(customer_id, select_for_update=True)
+        if not user:
+            logger.warning(f"User not found for customer_id: {customer_id}")
+            return
+        
         user.subscription_status = 'inactive'
         user.current_plan = 'none'
         user.stripe_subscription_id = None
         user.save()
         logger.info(f"Subscription deleted for user {user.username}")
-    except User.DoesNotExist:
+    except Exception as e:
         logger.warning(f"User not found for customer_id: {customer_id}")
     except Exception as e:
         logger.error(f"Error handling subscription.deleted: {str(e)}", exc_info=True)
@@ -116,8 +132,11 @@ def handle_invoice_paid(invoice):
     amount_paid = invoice.get('amount_paid', 0)  # Amount in cents
     
     try:
-        # Use select_for_update to lock row and prevent concurrent updates
-        user = User.objects.select_for_update().get(stripe_customer_id=customer_id)
+        # Use UserService with select_for_update for transaction safety
+        user = UserService.get_user_by_stripe_customer_id(customer_id, select_for_update=True)
+        if not user:
+            logger.warning(f"User not found for customer_id: {customer_id}")
+            return
         
         # Increment total_amount_paid (stored in cents as integer)
         # This is atomic within the transaction
@@ -132,7 +151,7 @@ def handle_invoice_paid(invoice):
             f"Invoice paid: ${amount_paid/100:.2f} for user {user.username}. "
             f"New lifetime value: ${user.get_lifetime_value_dollars():.2f}"
         )
-    except User.DoesNotExist:
+    except Exception as e:
         logger.warning(f"User not found for customer_id: {customer_id}")
     except Exception as e:
         logger.error(f"Error handling invoice.paid: {str(e)}", exc_info=True)
@@ -149,11 +168,16 @@ def handle_invoice_payment_failed(invoice):
     customer_id = invoice.get('customer')
     
     try:
-        user = User.objects.select_for_update().get(stripe_customer_id=customer_id)
+        # Use UserService with select_for_update for transaction safety
+        user = UserService.get_user_by_stripe_customer_id(customer_id, select_for_update=True)
+        if not user:
+            logger.warning(f"User not found for customer_id: {customer_id}")
+            return
+        
         # Optionally mark subscription as inactive on payment failure
         # For now, we'll let Stripe handle the subscription status
         logger.info(f"Payment failed for customer: {customer_id}, user: {user.username}")
-    except User.DoesNotExist:
+    except Exception as e:
         logger.warning(f"User not found for customer_id: {customer_id}")
     except Exception as e:
         logger.error(f"Error handling invoice.payment_failed: {str(e)}", exc_info=True)

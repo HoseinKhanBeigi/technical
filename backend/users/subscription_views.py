@@ -2,7 +2,7 @@
 Subscription management views for upgrading/downgrading plans.
 
 This module handles HTTP requests/responses for subscription operations.
-Business logic is delegated to SubscriptionService.
+Business logic is delegated to SubscriptionService and UserService.
 """
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -12,9 +12,10 @@ from rest_framework.request import Request
 from django.views.decorators.csrf import csrf_exempt
 import logging
 from .models import User
-from .serializers import UserSerializer, SubscriptionUpdateSerializer
+from .serializers import SubscriptionUpdateSerializer
 from .stripe_utils import validate_stripe_config
 from .subscription_service import SubscriptionService
+from .user_service import UserService
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +30,9 @@ def _user_status_view(request: Request) -> Response:
     Returns:
         Response: User data including subscription status and lifetime value
     """
-    serializer = UserSerializer(request.user)
-    return Response(serializer.data)
+    # Use UserService for user status retrieval
+    user_data = UserService.get_user_status(request.user)
+    return Response(user_data)
 
 
 user_status = csrf_exempt(api_view(['GET'])(permission_classes([IsAuthenticated])(_user_status_view)))
@@ -69,11 +71,11 @@ def _update_subscription_view(request: Request) -> Response:
         # Use service layer to handle subscription update
         SubscriptionService.handle_subscription_update(user, target_plan)
         
-        # Refresh user from database
-        user.refresh_from_db()
-        serializer = UserSerializer(user)
+        # Refresh user from database using UserService
+        UserService.refresh_user_from_db(user)
+        user_data = UserService.get_user_status(user)
         logger.info(f"Subscription updated successfully for user {user.username}")
-        return Response(serializer.data)
+        return Response(user_data)
         
     except ValueError as e:
         logger.warning(f"Validation error for user {user.username}: {str(e)}")
