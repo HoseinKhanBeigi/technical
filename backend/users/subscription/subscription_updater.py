@@ -7,8 +7,8 @@ from typing import Any, Literal
 import logging
 from django.db import transaction
 
-from .models import User
-from .stripe_utils import get_plan_price_ids
+from ..models import User
+from ..utils.stripe_utils import get_plan_price_ids
 
 logger = logging.getLogger(__name__)
 

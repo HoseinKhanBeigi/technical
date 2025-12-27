@@ -10,8 +10,8 @@ from django.contrib.auth import authenticate
 from django.http import HttpRequest
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
-from .models import User
-from .serializers import UserSerializer
+from ..models import User
+from ..serializers import UserSerializer
 
 logger = logging.getLogger(__name__)
 

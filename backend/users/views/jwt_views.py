@@ -9,8 +9,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
-from .auth_service import AuthService
-from .user_service import UserService
+from ..services.auth_service import AuthService
+from ..services.user_service import UserService
 import logging
 
 logger = logging.getLogger(__name__)

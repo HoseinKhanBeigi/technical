@@ -5,8 +5,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.conf import settings
-from .stripe_utils import get_stripe
-from .webhook_handlers import (
+from ..utils.stripe_utils import get_stripe
+from ..webhooks.webhook_handlers import (
     handle_subscription_created,
     handle_subscription_updated,
     handle_subscription_deleted,

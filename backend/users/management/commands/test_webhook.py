@@ -4,7 +4,7 @@ Usage: python manage.py test_webhook <event_type>
 """
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from users.webhook_handlers import (
+from users.webhooks.webhook_handlers import (
     handle_subscription_created,
     handle_subscription_updated,
     handle_subscription_deleted,

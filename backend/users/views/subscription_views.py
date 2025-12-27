@@ -11,11 +11,11 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from django.views.decorators.csrf import csrf_exempt
 import logging
-from .models import User
-from .serializers import SubscriptionUpdateSerializer
-from .stripe_utils import validate_stripe_config
-from .subscription_service import SubscriptionService
-from .user_service import UserService
+from ..models import User
+from ..serializers import SubscriptionUpdateSerializer
+from ..utils.stripe_utils import validate_stripe_config
+from ..services.subscription_service import SubscriptionService
+from ..services.user_service import UserService
 
 logger = logging.getLogger(__name__)
 

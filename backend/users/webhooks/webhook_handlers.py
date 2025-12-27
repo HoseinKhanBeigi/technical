@@ -6,8 +6,8 @@ Business logic for user retrieval is delegated to UserService.
 """
 from django.conf import settings
 from django.db import transaction
-from .models import User
-from .user_service import UserService
+from ..models import User
+from ..services.user_service import UserService
 import logging
 
 logger = logging.getLogger(__name__)

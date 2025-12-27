@@ -13,7 +13,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MinValueValidator
 from typing import Optional
-from .constants import (
+from .utils.constants import (
     SUBSCRIPTION_STATUS_ACTIVE,
     SUBSCRIPTION_STATUS_INACTIVE,
     PLAN_BASIC,
@@ -21,8 +21,8 @@ from .constants import (
     PLAN_NONE,
     CENTS_PER_DOLLAR,
 )
-from .user_validators import validate_user_model
-from .user_helpers import (
+from .utils.user_validators import validate_user_model
+from .utils.user_helpers import (
     get_lifetime_value_dollars,
     is_subscription_active,
     has_plan,

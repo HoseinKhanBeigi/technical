@@ -7,8 +7,8 @@ from typing import Any
 import logging
 from django.db import transaction
 
-from .models import User
-from .constants import (
+from ..models import User
+from ..utils.constants import (
     SUBSCRIPTION_STATUS_INACTIVE,
     PLAN_NONE,
 )

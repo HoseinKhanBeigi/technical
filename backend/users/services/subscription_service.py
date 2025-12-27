@@ -12,16 +12,16 @@ from typing import Literal
 import logging
 from django.db import transaction
 
-from .models import User
-from .stripe_utils import get_stripe
-from .constants import (
+from ..models import User
+from ..utils.stripe_utils import get_stripe
+from ..utils.constants import (
     PLAN_NONE,
     SUBSCRIPTION_STATUS_INACTIVE,
 )
-from .subscription_creator import create_subscription
-from .subscription_updater import update_subscription_plan
-from .subscription_canceller import cancel_subscription
-from .subscription_validator import get_or_validate_subscription
+from ..subscription.subscription_creator import create_subscription
+from ..subscription.subscription_updater import update_subscription_plan
+from ..subscription.subscription_canceller import cancel_subscription
+from ..subscription.subscription_validator import get_or_validate_subscription
 
 logger = logging.getLogger(__name__)
 

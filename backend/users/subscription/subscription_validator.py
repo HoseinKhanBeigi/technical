@@ -7,7 +7,7 @@ from typing import Optional, Any
 import logging
 from django.db import transaction
 
-from .models import User
+from ..models import User
 
 logger = logging.getLogger(__name__)
 

@@ -7,9 +7,9 @@ from typing import Any, Literal
 import logging
 from django.db import transaction
 
-from .models import User
-from .stripe_utils import get_plan_price_ids
-from .constants import (
+from ..models import User
+from ..utils.stripe_utils import get_plan_price_ids
+from ..utils.constants import (
     SUBSCRIPTION_STATUS_ACTIVE,
     SUBSCRIPTION_STATUS_INACTIVE,
     ACTIVE_STRIPE_STATUSES,

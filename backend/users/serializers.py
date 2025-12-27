@@ -4,7 +4,7 @@ Serializers for user and subscription data.
 from rest_framework import serializers
 from typing import Literal
 from .models import User
-from .constants import PLAN_BASIC, PLAN_PRO, PLAN_NONE
+from .utils.constants import PLAN_BASIC, PLAN_PRO, PLAN_NONE
 
 
 class UserSerializer(serializers.ModelSerializer):

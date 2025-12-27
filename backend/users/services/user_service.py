@@ -7,8 +7,8 @@ separating it from view layer concerns.
 import logging
 from typing import Dict, Optional
 from django.contrib.auth import get_user_model
-from .models import User
-from .serializers import UserSerializer
+from ..models import User
+from ..serializers import UserSerializer
 
 logger = logging.getLogger(__name__)
 UserModel = get_user_model()

@@ -1,8 +1,8 @@
 from django.urls import path
-from .health_views import health_check, health_check_detailed
-from .jwt_views import jwt_login, jwt_logout, jwt_refresh, jwt_verify
-from .subscription_views import user_status, update_subscription
-from .webhook_views import stripe_webhook
+from .views.health_views import health_check, health_check_detailed
+from .views.jwt_views import jwt_login, jwt_logout, jwt_refresh, jwt_verify
+from .views.subscription_views import user_status, update_subscription
+from .views.webhook_views import stripe_webhook
 
 urlpatterns = [
     # JWT authentication endpoints
