@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import axios from 'axios'
+import apiClient from '@/lib/api'
+import { clearAuthTokens, getRefreshToken } from '@/lib/auth'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -32,12 +33,8 @@ export default function Dashboard() {
     try {
       setLoading(true)
       setError(null)
-      const response = await axios.get(`${API_URL}/api/user/status/`, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
+      // Use JWT-authenticated API client
+      const response = await apiClient.get('/api/user/status/')
       if (response.data) {
         setUserData(response.data)
       } else {
@@ -47,7 +44,8 @@ export default function Dashboard() {
       console.error('Error fetching user data:', err)
       // Handle different error cases
       if (err.response?.status === 401 || err.response?.status === 403) {
-        // Not authenticated - redirect to login
+        // Not authenticated - clear tokens and redirect to login
+        clearAuthTokens()
         setError('Please log in to continue')
         setTimeout(() => {
           router.push('/login')
@@ -70,16 +68,8 @@ export default function Dashboard() {
       setError(null)
       setSuccess(null)
       
-      const response = await axios.post(
-        `${API_URL}/api/user/subscription/`,
-        { plan },
-        { 
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      )
+      // Use JWT-authenticated API client
+      const response = await apiClient.post('/api/user/subscription/', { plan })
       
       setUserData(response.data)
       const planName = plan === 'none' ? 'cancelled' : plan === 'basic' ? 'Basic Plan' : 'Pro Plan'
@@ -314,10 +304,17 @@ export default function Dashboard() {
             className="btn btn-danger"
             onClick={async () => {
               try {
-                await axios.post(`${API_URL}/api/logout/`, {}, { withCredentials: true })
+                const refreshToken = getRefreshToken()
+                if (refreshToken) {
+                  await apiClient.post('/api/auth/jwt/logout/', { refresh: refreshToken })
+                }
+                clearAuthTokens()
                 router.push('/login')
               } catch (err) {
                 console.error('Logout error:', err)
+                // Clear tokens anyway
+                clearAuthTokens()
+                router.push('/login')
               }
             }}
           >

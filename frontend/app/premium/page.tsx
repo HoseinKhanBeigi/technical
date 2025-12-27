@@ -1,10 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import axios from 'axios'
 import { useRouter } from 'next/navigation'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+import apiClient from '@/lib/api'
 
 export default function Premium() {
   const [userData, setUserData] = useState<any>(null)
@@ -17,9 +15,8 @@ export default function Premium() {
 
   const fetchUserData = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/user/status/`, {
-        withCredentials: true,
-      })
+      // Use JWT-authenticated API client
+      const response = await apiClient.get('/api/user/status/')
       
       if (response.data.subscription_status !== 'active') {
         router.push('/dashboard')

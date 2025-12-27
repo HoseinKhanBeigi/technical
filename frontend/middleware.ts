@@ -10,8 +10,13 @@ export async function middleware(request: NextRequest) {
                     process.env.NEXT_PUBLIC_API_URL || 
                     'http://localhost:8000'
       
-      // Fetch user status from backend
+      // Get JWT token from cookie (if available) or let client-side handle it
+      // For middleware, we'll check if user is authenticated via session or JWT
       const cookieHeader = request.headers.get('cookie') || ''
+      
+      // Try to get JWT token from cookie (if stored there) or use session
+      // For now, let the client-side component handle JWT authentication
+      // Middleware will just check session as fallback
       const response = await fetch(`${apiUrl}/api/user/status/`, {
         headers: {
           'Cookie': cookieHeader,

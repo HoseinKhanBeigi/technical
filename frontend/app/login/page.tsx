@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
+import { setAuthTokens } from '@/lib/auth'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -19,14 +20,15 @@ export default function Login() {
     setLoading(true)
 
     try {
-      // Use Django's login endpoint
+      // Use JWT login endpoint
       const response = await axios.post(
-        `${API_URL}/api/login/`,
-        { username, password },
-        { withCredentials: true }
+        `${API_URL}/api/auth/jwt/login/`,
+        { username, password }
       )
 
-      if (response.status === 200) {
+      if (response.data.access && response.data.refresh) {
+        // Store JWT tokens
+        setAuthTokens(response.data.access, response.data.refresh)
         router.push('/dashboard')
       }
     } catch (err: any) {
